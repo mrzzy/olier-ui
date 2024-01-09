@@ -15,12 +15,17 @@ with open(path.join(ASSETS_DIR, "styles.css"), "r") as f:
     STYLE_CSS = f.read()
 
 
-@dataclass
+@dataclass(frozen=True)
 class Message:
     """A Chat Message between between the user and assistant."""
 
     role: str
     text: str
+
+    @property
+    def id(self) -> str:
+        """Identifier that uniquely identifies this message."""
+        return str(hash(self))
 
 
 def render(chat_log: list[Message]):
@@ -46,7 +51,13 @@ def render(chat_log: list[Message]):
         ):
             st.write(message.text)
 
+            if message.role == "assistant":
+                columns = st.columns(12)
+                columns[0].button(label=":thumbsup:", key=f"{message.id}_upvote")
+                columns[1].button(label=":thumbsdown:", key=f"{message.id}_downvote")
+
     st.chat_input("Ask Olier about...")
+
 
 render(
     [
