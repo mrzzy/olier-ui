@@ -9,6 +9,8 @@ import streamlit as st
 
 ASSETS_DIR = "assets"
 OLIER_PNG = path.join(ASSETS_DIR, "Olier.png")
+OLIER_SMALL_PNG = path.join(ASSETS_DIR, "olier-small.png")
+LOTUS_PNG = path.join(ASSETS_DIR, "lotus.png")
 LA_GRACE_LOGO = path.join(ASSETS_DIR, "la-grace-logo.png")
 
 with open(path.join(ASSETS_DIR, "styles.css"), "r") as f:
@@ -47,19 +49,28 @@ def render(chat_log: list[Message]):
     for message in chat_log:
         with st.chat_message(
             name=message.role,
-            avatar=OLIER_PNG if message.role == "assistant" else None,
+            avatar=OLIER_SMALL_PNG if message.role == "assistant" else LOTUS_PNG,
         ):
             st.write(message.text)
 
             if message.role == "assistant":
                 columns = st.columns(12)
-                columns[0].button(label=":thumbsup:", key=f"{message.id}_upvote", help="Upvote Olier's response")
-                columns[1].button(label=":thumbsdown:", key=f"{message.id}_downvote", help="Downvote Olier's response")
+                columns[0].button(
+                    label=":thumbsup:",
+                    key=f"{message.id}_upvote",
+                    help="Upvote Olier's response",
+                )
+                columns[1].button(
+                    label=":thumbsdown:",
+                    key=f"{message.id}_downvote",
+                    help="Downvote Olier's response",
+                )
 
     # copy chat log to clipboard
     columns = st.columns(12)
-    columns[11].button(label=":clipboard:", help= "Copy chat to clipboard")
+    columns[11].button(label=":clipboard:", help="Copy chat to clipboard")
 
+    # chatbot input
     st.chat_input("Ask Olier about...")
 
 
