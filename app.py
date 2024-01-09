@@ -36,8 +36,10 @@ def render(chat_log: list[Message]):
 
     # page sidebar
     st.sidebar.image(LA_GRACE_LOGO)
+    st.sidebar.divider()
+    st.sidebar.button(label=":clipboard: Copy chat to clipboard")
 
-    # main pagejk
+    # main page
     # header (centered)
     with st.container():
         st.image(OLIER_PNG)
