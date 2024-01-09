@@ -36,8 +36,6 @@ def render(chat_log: list[Message]):
 
     # page sidebar
     st.sidebar.image(LA_GRACE_LOGO)
-    st.sidebar.divider()
-    st.sidebar.button(label=":clipboard: Copy chat to clipboard")
 
     # main page
     # header (centered)
@@ -55,8 +53,12 @@ def render(chat_log: list[Message]):
 
             if message.role == "assistant":
                 columns = st.columns(12)
-                columns[0].button(label=":thumbsup:", key=f"{message.id}_upvote")
-                columns[1].button(label=":thumbsdown:", key=f"{message.id}_downvote")
+                columns[0].button(label=":thumbsup:", key=f"{message.id}_upvote", help="Upvote Olier's response")
+                columns[1].button(label=":thumbsdown:", key=f"{message.id}_downvote", help="Downvote Olier's response")
+
+    # copy chat log to clipboard
+    columns = st.columns(12)
+    columns[11].button(label=":clipboard:", help= "Copy chat to clipboard")
 
     st.chat_input("Ask Olier about...")
 
