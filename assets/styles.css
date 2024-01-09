@@ -17,9 +17,31 @@ div.st-emotion-cache-0:nth-child(2)
   > div:nth-child(1)
   > div:nth-child(1)
   > div:nth-child(2) {
-    justify-content: center;
+  justify-content: center;
 }
 
 div.st-emotion-cache-0:nth-child(2) > div:nth-child(1) > div:nth-child(1) img {
+  height: 220pt;
   border-radius: 16%;
+}
+
+/* Chat Input */
+textarea[data-testid="stChatInput"] {
+  padding: 1.2rem;
+  background-color: #ffece1;
+}
+
+textarea[data-testid="stChatInput"]::placeholder {
+  opacity: 0.8;
+}
+
+div.stChatInputContainer > div > div:nth-child(3) {
+  align-items: center;
+}
+
+div.stChatInputContainer > div > div:nth-child(3) button {
+  border-radius: 50%;
+  position: relative;
+  right: 4pt;
+  /* color: #FFFFFF; */
 }
