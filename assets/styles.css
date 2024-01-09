@@ -1,0 +1,25 @@
+/*
+* Olier
+* Frontend
+* Styles
+*/
+
+/* Header */
+/* center header */
+div.st-emotion-cache-0:nth-child(2) > div:nth-child(1) > div:nth-child(1) span {
+  text-align: center;
+}
+
+/* round & center olier image */
+div.st-emotion-cache-0:nth-child(2)
+  > div:nth-child(1)
+  > div:nth-child(1)
+  > div:nth-child(1)
+  > div:nth-child(1)
+  > div:nth-child(2) {
+    justify-content: center;
+}
+
+div.st-emotion-cache-0:nth-child(2) > div:nth-child(1) > div:nth-child(1) img {
+  border-radius: 16%;
+}
