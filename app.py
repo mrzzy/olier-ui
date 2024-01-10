@@ -126,6 +126,7 @@ def on_submit_chat_input():
     s.chat_log.append(Message(role="assistant", content=""))
 
 
+
 def render(s: State) -> State:
     """
     Render the Olier Frontend UI.
@@ -164,20 +165,22 @@ def render(s: State) -> State:
     for message in s.chat_log:
         draw_message(message)
 
-    s.button_idx = cast(
-        Optional[int],
-        sac.buttons(
-            [
-                # chat rating button
-                sac.ButtonsItem(icon="hand-thumbs-up"),
-                sac.ButtonsItem(icon="hand-thumbs-down"),
-                # copy chat log to clipboard button
-                sac.ButtonsItem(icon="copy"),
-            ],
-            index=s.button_idx,
-            return_index=True,
-        ),
-    )
+    # only render utility buttons if not currently streaming
+    if s.streaming_idx is None:
+        s.button_idx = cast(
+            Optional[int],
+            sac.buttons(
+                [
+                    # chat rating button
+                    sac.ButtonsItem(icon="hand-thumbs-up"),
+                    sac.ButtonsItem(icon="hand-thumbs-down"),
+                    # copy chat log to clipboard button
+                    sac.ButtonsItem(icon="copy"),
+                ],
+                index=s.button_idx,
+                return_index=True,
+            ),
+        )
 
     # chatbot input
     st.chat_input(
