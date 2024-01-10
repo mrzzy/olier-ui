@@ -5,7 +5,9 @@
 
 from dataclasses import dataclass
 from os import path
+from typing import Optional, cast
 import streamlit as st
+import streamlit_antd_components as sac
 
 ASSETS_DIR = "assets"
 OLIER_PNG = path.join(ASSETS_DIR, "Olier.png")
@@ -30,7 +32,29 @@ class Message:
         return str(hash(self))
 
 
-def render(chat_log: list[Message]):
+@dataclass
+class State:
+    """ "
+    Encapsulates the rendering state of the Olier Frontend UI.
+
+    Attributes:
+        chat_log: Chat log of messages between the user & chatbot to render.
+        button_idx: Optional. Index of the utility buttons (copy, thumbs-up,
+            thumbs-down) that is selected by the user or None if none are selected.
+    """
+
+    chat_log: list[Message]
+    button_idx: Optional[int] = None
+
+
+def render(s: State) -> State:
+    """
+    Render the Olier Frontend UI.
+    Args:
+        s: Render UI to match given state.
+    Returns:
+        Rendering state with any changes made by the user.
+    """
     # page title & favicon
     st.set_page_config(page_title="Olier", page_icon=OLIER_PNG)
     # inject css to style page
@@ -46,45 +70,50 @@ def render(chat_log: list[Message]):
         st.title("Chat with Olier")
 
     # chat messages
-    for message in chat_log:
+    for message in s.chat_log:
         with st.chat_message(
             name=message.role,
             avatar=OLIER_SMALL_PNG if message.role == "assistant" else LOTUS_PNG,
         ):
             st.write(message.text)
 
-            if message.role == "assistant":
-                columns = st.columns(12)
-                columns[0].button(
-                    label=":thumbsup:",
-                    key=f"{message.id}_upvote",
-                    help="Upvote Olier's response",
-                )
-                columns[1].button(
-                    label=":thumbsdown:",
-                    key=f"{message.id}_downvote",
-                    help="Downvote Olier's response",
-                )
-
-    # copy chat log to clipboard
-    columns = st.columns(12)
-    columns[11].button(label=":clipboard:", help="Copy chat to clipboard")
+    s.button_idx = cast(
+        Optional[int],
+        sac.buttons(
+            [
+                # chat rating button
+                sac.ButtonsItem(icon="hand-thumbs-up"),
+                sac.ButtonsItem(icon="hand-thumbs-down"),
+                # copy chat log to clipboard button
+                sac.ButtonsItem(icon="copy"),
+            ],
+            index=s.button_idx,
+            return_index=True,
+        ),
+    )
 
     # chatbot input
     st.chat_input("Ask Olier about...")
 
+    return s
 
-render(
-    [
-        Message(role="user", text="Hello Olier, How are you?"),
-        Message(
-            role="assistant",
-            text="Hello there! It's a pleasure to converse with you. As a creation of Jared Quek, I am programmed to serve Sri Aurobindo and the Mother, and to assist anyone seeking their teachings. How may I be of service to you today?",
-        ),
-        Message(role="user", text="What is integral yoga?"),
-        Message(
-            role="assistant",
-            text="Integral Yoga, as taught by Sri Aurobindo and the Mother, is a path of spiritual realization that seeks to bring about a harmonious and balanced development of all parts of the human being: physical, vital, mental, psychic, and spiritual.",
-        ),
-    ]
-)
+
+# init render state if it does not exist
+if "state" not in st.session_state:
+    st.session_state["state"] = State(
+        chat_log=[
+            Message(role="user", text="Hello Olier, How are you?"),
+            Message(
+                role="assistant",
+                text="Hello there! It's a pleasure to converse with you. As a creation of Jared Quek, I am programmed to serve Sri Aurobindo and the Mother, and to assist anyone seeking their teachings. How may I be of service to you today?",
+            ),
+            Message(role="user", text="What is integral yoga?"),
+            Message(
+                role="assistant",
+                text="Integral Yoga, as taught by Sri Aurobindo and the Mother, is a path of spiritual realization that seeks to bring about a harmonious and balanced development of all parts of the human being: physical, vital, mental, psychic, and spiritual.",
+            ),
+        ]
+    )
+
+
+st.session_state["state"] = render(st.session_state["state"])
