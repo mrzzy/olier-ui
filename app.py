@@ -24,7 +24,7 @@ class Message:
     """A Chat Message between between the user and assistant."""
 
     role: str
-    text: str
+    content: str
 
     @property
     def id(self) -> str:
@@ -75,7 +75,7 @@ def render(s: State) -> State:
             name=message.role,
             avatar=OLIER_SMALL_PNG if message.role == "assistant" else LOTUS_PNG,
         ):
-            st.write(message.text)
+            st.write(message.content)
 
     s.button_idx = cast(
         Optional[int],
@@ -102,15 +102,15 @@ def render(s: State) -> State:
 if "state" not in st.session_state:
     st.session_state["state"] = State(
         chat_log=[
-            Message(role="user", text="Hello Olier, How are you?"),
+            Message(role="user", content="Hello Olier, How are you?"),
             Message(
                 role="assistant",
-                text="Hello there! It's a pleasure to converse with you. As a creation of Jared Quek, I am programmed to serve Sri Aurobindo and the Mother, and to assist anyone seeking their teachings. How may I be of service to you today?",
+                content="Hello there! It's a pleasure to converse with you. As a creation of Jared Quek, I am programmed to serve Sri Aurobindo and the Mother, and to assist anyone seeking their teachings. How may I be of service to you today?",
             ),
-            Message(role="user", text="What is integral yoga?"),
+            Message(role="user", content="What is integral yoga?"),
             Message(
                 role="assistant",
-                text="Integral Yoga, as taught by Sri Aurobindo and the Mother, is a path of spiritual realization that seeks to bring about a harmonious and balanced development of all parts of the human being: physical, vital, mental, psychic, and spiritual.",
+                content="Integral Yoga, as taught by Sri Aurobindo and the Mother, is a path of spiritual realization that seeks to bring about a harmonious and balanced development of all parts of the human being: physical, vital, mental, psychic, and spiritual.",
             ),
         ]
     )
