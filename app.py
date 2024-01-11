@@ -3,12 +3,13 @@
 # Frontend
 #
 
-from dataclasses import asdict, dataclass
 from os import path
-from typing import FrozenSet, Generator, Optional, cast
+from typing import Generator, Optional, cast
 import openai
 import streamlit as st
 import streamlit_antd_components as sac
+
+from models import Message, State
 
 ASSETS_DIR = "assets"
 OLIER_PNG = path.join(ASSETS_DIR, "Olier.png")
@@ -23,41 +24,6 @@ MODEL_TEMPERATURE = 0.4
 
 with open(path.join(ASSETS_DIR, "styles.css"), "r") as f:
     STYLE_CSS = f.read()
-
-
-@dataclass(frozen=True)
-class Message:
-    """A Chat Message between between the user and assistant."""
-
-    role: str
-    content: str
-
-    @property
-    def id(self) -> str:
-        """Identifier that uniquely identifies this message."""
-        return str(hash(self))
-
-    def append(self, content: str) -> "Message":
-        """Append the given content to the message's content"""
-        return Message(self.role, self.content + content)
-
-
-@dataclass
-class State:
-    """
-    Encapsulates the rendering state of the Olier Frontend UI.
-
-    Attributes:
-        chat_log: Chat log of messages between the user & chatbot to render.
-        button_idx: Optional. Index of the utility buttons (copy, thumbs-up,
-            thumbs-down) that is selected by the user or None if none are selected.
-        streaming_idx: Optional. Index of the user message the UI is currently streaming
-            the Chatbot's reply to or None if not currently streaming.
-    """
-
-    chat_log: list[Message]
-    button_idx: Optional[int] = None
-    streaming_idx: Optional[int] = None
 
 
 # OpenAI client
@@ -86,13 +52,12 @@ def get_response_stream(message_idx: int) -> Generator[dict, None, None]:
     """
     # limit context to 3 user-assistant exchanges
     context = st.session_state["state"].chat_log[message_idx - 6 : message_idx + 1]
-    print(f"{message_idx}, {message_idx -6}: {message_idx+1} :::: {context}")
 
     return cast(
         Generator[dict, None, None],
         openai.ChatCompletion.create(
             model=model_id(),
-            messages=[asdict(m) for m in context],
+            messages=[m.to_openai() for m in context],
             max_tokens=MODEL_MAX_TOKENS,
             temperature=MODEL_TEMPERATURE,
             # generate only 1 response choice
@@ -105,6 +70,7 @@ def get_response_stream(message_idx: int) -> Generator[dict, None, None]:
 # UI Frontend
 # ui element keys
 UI_CHAT_INPUT = "chat_input"
+UI_UTILTY_BUTTONS = "utility_buttons"
 
 
 def draw_message(message: Message):
@@ -126,6 +92,11 @@ def on_submit_chat_input():
     s.chat_log.append(Message(role="assistant", content=""))
 
 
+def on_click_utility_button():
+    s = cast(State, st.session_state["state"])
+    if st.session_state[UI_UTILTY_BUTTONS] == 2:
+        # toggle clipboard
+        s.is_copying = not s.is_copying
 
 def render(s: State) -> State:
     """
@@ -167,20 +138,26 @@ def render(s: State) -> State:
 
     # only render utility buttons if not currently streaming
     if s.streaming_idx is None:
-        s.button_idx = cast(
-            Optional[int],
-            sac.buttons(
-                [
-                    # chat rating button
-                    sac.ButtonsItem(icon="hand-thumbs-up"),
-                    sac.ButtonsItem(icon="hand-thumbs-down"),
-                    # copy chat log to clipboard button
-                    sac.ButtonsItem(icon="copy"),
-                ],
-                index=s.button_idx,
-                return_index=True,
-            ),
+        sac.buttons(
+            [
+                # chat rating button
+                sac.ButtonsItem(icon="hand-thumbs-up"),
+                sac.ButtonsItem(icon="hand-thumbs-down"),
+                # copy chat log to clipboard button
+                sac.ButtonsItem(icon="copy"),
+            ],
+            index=None,
+            return_index=True,
+            key=UI_UTILTY_BUTTONS,
+            on_change=on_click_utility_button,
         )
+
+        # copy to clipboard
+        if s.is_copying:
+            # show code block with copy to clipboard function
+            st.code("\n".join(str(m) for m in s.chat_log))
+            # prompt user hover to access copy feature
+            st.toast("Hover over the top right of the text box to copy.")
 
     # chatbot input
     st.chat_input(
