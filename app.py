@@ -91,8 +91,7 @@ def draw_message(message: Message):
         st.write(message.content)
 
 
-def on_submit_chat_input():
-    s = cast(State, st.session_state["state"])
+def on_submit_chat_input(s: State):
     # add user's message
     s.chat_log.append(Message(role="user", content=st.session_state[UI_CHAT_INPUT]))
     # mark user's last mssage as currently streaming
@@ -101,8 +100,7 @@ def on_submit_chat_input():
     s.chat_log.append(Message(role="assistant", content=""))
 
 
-def on_click_utility_button():
-    s = cast(State, st.session_state["state"])
+def on_click_utility_button(s: State):
     if st.session_state[UI_UTILTY_BUTTONS] == 2:
         # toggle clipboard
         s.is_copying = not s.is_copying
@@ -160,6 +158,7 @@ def render(s: State) -> State:
             return_index=True,
             key=UI_UTILTY_BUTTONS,
             on_change=on_click_utility_button,
+            args=(s,),
         )
 
         # copy to clipboard
@@ -171,7 +170,10 @@ def render(s: State) -> State:
 
     # chatbot input
     st.chat_input(
-        "Ask Olier about...", key=UI_CHAT_INPUT, on_submit=on_submit_chat_input
+        "Ask Olier about...",
+        key=UI_CHAT_INPUT,
+        on_submit=on_submit_chat_input,
+        args=(s,),
     )
 
     return s
