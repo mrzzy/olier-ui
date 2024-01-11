@@ -183,8 +183,8 @@ def render(s: State) -> State:
     for message in s.chat_log:
         draw_message(message)
 
-    # only render utility buttons if not currently streaming
-    if s.streaming_idx is None:
+    # only render utility buttons if not currently streaming and non empty chatlog
+    if s.streaming_idx is None and len(s.chat_log) > 0:
         sac.buttons(
             [
                 # chat rating button
