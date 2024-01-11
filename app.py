@@ -11,15 +11,22 @@ import streamlit_antd_components as sac
 
 from models import Message, State
 
+# Settings
+# assets
 ASSETS_DIR = "assets"
 OLIER_PNG = path.join(ASSETS_DIR, "Olier.png")
 OLIER_SMALL_PNG = path.join(ASSETS_DIR, "olier-small.png")
 LOTUS_PNG = path.join(ASSETS_DIR, "lotus.png")
 LA_GRACE_LOGO = path.join(ASSETS_DIR, "la-grace-logo.png")
+# openai client
 OPENAI_API_BASE = "http://localhost:8000/v1"
 OPENAI_API_KEY = "NA"
+# model
+# response generation
 MODEL_MAX_TOKENS = 1000
 MODEL_TEMPERATURE = 0.4
+# no. of message passed as context
+MODEL_CONTEXT_SIZE = 6
 
 
 with open(path.join(ASSETS_DIR, "styles.css"), "r") as f:
@@ -51,7 +58,9 @@ def get_response_stream(message_idx: int) -> Generator[dict, None, None]:
         Generator that streams the response from the model.
     """
     # limit context to 3 user-assistant exchanges
-    context = st.session_state["state"].chat_log[message_idx - 6 : message_idx + 1]
+    context = st.session_state["state"].chat_log[
+        message_idx - MODEL_CONTEXT_SIZE : message_idx + 1
+    ]
 
     return cast(
         Generator[dict, None, None],
@@ -97,6 +106,7 @@ def on_click_utility_button():
     if st.session_state[UI_UTILTY_BUTTONS] == 2:
         # toggle clipboard
         s.is_copying = not s.is_copying
+
 
 def render(s: State) -> State:
     """
