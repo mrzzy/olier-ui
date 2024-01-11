@@ -3,7 +3,8 @@
 # Frontend
 #
 
-from os import path
+import json
+from pathlib import Path
 from typing import Generator, Optional, cast
 import openai
 import streamlit as st
@@ -13,31 +14,59 @@ from models import Message, State
 
 # Settings
 # assets
-ASSETS_DIR = "assets"
-OLIER_PNG = path.join(ASSETS_DIR, "Olier.png")
-OLIER_SMALL_PNG = path.join(ASSETS_DIR, "olier-small.png")
-LOTUS_PNG = path.join(ASSETS_DIR, "lotus.png")
-LA_GRACE_LOGO = path.join(ASSETS_DIR, "la-grace-logo.png")
-# openai client
-OPENAI_API_BASE = "http://localhost:8000/v1"
-OPENAI_API_KEY = "NA"
+ASSETS_DIR = Path("assets")
+OLIER_PNG = str(ASSETS_DIR / "Olier.png")
+OLIER_SMALL_PNG = str(ASSETS_DIR / "olier-small.png")
+LOTUS_PNG = str(ASSETS_DIR / "lotus.png")
+LA_GRACE_LOGO = str(ASSETS_DIR / "la-grace-logo.png")
+with open(ASSETS_DIR / "styles.css", "r") as f:
+    STYLE_CSS = f.read()
+
+
 # model
 # response generation
 MODEL_MAX_TOKENS = 1000
 MODEL_TEMPERATURE = 0.4
-# no. of message passed as context
+# no. of message(s) passed as context
 MODEL_CONTEXT_SIZE = 6
 
+# dataset
+DATA_DIR = Path("data")
+# good samples: rated thumbs up by user
+GOOD_DATA_DIR = DATA_DIR / "good"
+# bad samples: rated thumbs down by user
+BAD_DATA_DIR = DATA_DIR / "bad"
+# no of message(s) saved in each data sample
+DATA_SAMPLE_SIZE = 6
+# create dataset directories if they do not exist
+DATA_DIR.mkdir(exist_ok=True)
+GOOD_DATA_DIR.mkdir(exist_ok=True)
+BAD_DATA_DIR.mkdir(exist_ok=True)
 
-with open(path.join(ASSETS_DIR, "styles.css"), "r") as f:
-    STYLE_CSS = f.read()
+
+def write_dataset(chat_log: list[Message], rating: bool):
+    """Write chat log as a sample with the given rating label.
+
+    Args:
+        chat_log: List of messages to write as sample.
+        rating: Rating True=Good, False=Bad label to give to the sample.
+    """
+    if len(chat_log) == 0:
+        # nothing to do
+        return
+    # use timestamp of first message to construct filename
+    filename = f"chat_log__{chat_log[0].timestamp.isoformat('_')}.json"
+    sample_file = (GOOD_DATA_DIR if rating else BAD_DATA_DIR) / filename
+
+    with sample_file.open("w") as f:
+        json.dump([m.to_dict() for m in chat_log], f)
 
 
 # OpenAI client
 # configure openai client to access chatbot model
-openai.api_base = OPENAI_API_BASE
+openai.api_base = "http://localhost:8000/v1"
 # since we are accessing a local endpoint, no credentials are required
-openai.api_key = OPENAI_API_KEY
+openai.api_key = "NA"
 
 
 @st.cache_data
@@ -101,7 +130,17 @@ def on_submit_chat_input(s: State):
 
 
 def on_click_utility_button(s: State):
-    if st.session_state[UI_UTILTY_BUTTONS] == 2:
+    button_idx = st.session_state[UI_UTILTY_BUTTONS]
+    # only allow the user to rate once
+    if s.rating is None:
+        if button_idx == 0:
+            # user rated thumbs up
+            s.rating = True
+        if button_idx == 1:
+            # user rated thumbs down
+            s.rating = False
+        write_dataset(s.chat_log[-DATA_SAMPLE_SIZE:], rating=cast(bool, s.rating))
+    if button_idx == 2:
         # toggle clipboard
         s.is_copying = not s.is_copying
 
@@ -160,13 +199,18 @@ def render(s: State) -> State:
             on_change=on_click_utility_button,
             args=(s,),
         )
+        # user rating
+        if s.rating == True:
+            st.toast("Great. Olier will show you something similar next time.", icon="📝")
+        elif s.rating == False:
+            st.toast("Got it. Olier will show you something different next time.", icon="📝")
 
         # copy to clipboard
         if s.is_copying:
             # show code block with copy to clipboard function
             st.code("\n".join(str(m) for m in s.chat_log))
             # prompt user hover to access copy feature
-            st.toast("Hover over the top right of the text box to copy.")
+            st.toast("Hover over the top right of the text box to copy.", icon="💡")
 
     # chatbot input
     st.chat_input(

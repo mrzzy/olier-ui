@@ -33,8 +33,12 @@ class Message:
         return Message(self.role, self.content + content, self.timestamp)
 
     def to_openai(self) -> dict[str, str]:
-        """Convert format suitable to pass to OpenAI client"""
+        """Convert to format suitable to be passed to OpenAI client"""
         return {"role": self.role, "content": self.content}
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary format"""
+        return {"role": self.role, "content": self.content, "timestamp": self.timestamp.isoformat()}
 
     def __str__(self) -> str:
         """Formats & returns Message as a text format:
@@ -55,8 +59,11 @@ class State:
         streaming_idx: Optional. Index of the user message the UI is currently streaming
             the Chatbot's reply to or None if not currently streaming.
         is_copying: Optional. Whether the user is currently copying from the clipboard.
+        rating: Optional. Whether the user has rated the conversation. True
+            if the user rated thumbs up, False if rated thumbs down or None otherwise.
     """
 
     chat_log: list[Message]
     streaming_idx: Optional[int] = None
     is_copying: bool = False
+    rating: Optional[bool] = None
