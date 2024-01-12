@@ -4,6 +4,9 @@
 # Streamlit config
 #
 
+[browser]
+gatherUsageStats=false
+
 [theme]
 primaryColor="#ED6E2B"
 backgroundColor="#FFFFFF"
