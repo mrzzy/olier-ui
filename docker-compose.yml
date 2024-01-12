@@ -20,7 +20,7 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    command: ["--model", "/models/Olier25", "--gpu-memory-utilization", "0.9"]
+    command: ["--model", "/models/OlierVer1", "--gpu-memory-utilization", "0.9"]
     restart: always
 
   ui:
