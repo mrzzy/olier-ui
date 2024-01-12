@@ -1,0 +1,61 @@
+#
+# Olier
+# Infrastructure
+# Docker compose Deployment
+#
+
+services:
+  model:
+    image: vllm/vllm-openai:latest
+    volumes:
+      - /home/jaredquek/jaredquek/text-generation-webui/models:/models
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    expose:
+      - 8000
+    # expose GPU to model container
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: ["--model", "/models/Olier25", "--gpu-memory-utilization", "0.9"]
+    restart: always
+
+  ui:
+    image: ghcr.io/mrzzy/olier-ui:latest
+    environment:
+      OLIER_UI_MODEL_API: "http://model:8000/v1"
+      OLIER_UI_DATA_DIR: "/dataset"
+    volumes:
+      - ./dataset:/dataset
+    expose:
+      - 8501
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          'import urllib.request; contents = urllib.request.urlopen("http://localhost:8501/_stcore/health").read()',
+        ]
+      interval: 5s
+      timeout: 1s
+      start_period: 20s
+    restart: always
+
+  # expose ui via ngrok tunnel as ingress
+  ingress:
+    image: ngrok/ngrok:latest
+    environment:
+      - "NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}"
+    command: ["start", "--config", "/ngrok.yml", "olier-ui"]
+    ports:
+      - 8501:8501
+    volumes:
+      - ./ngrok.yml:/ngrok.yml
+    depends_on:
+      ui:
+        condition: service_healthy
+    restart: always
