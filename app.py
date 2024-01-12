@@ -1,5 +1,5 @@
 #
-# Olier
+# Olier UI
 # Frontend
 #
 
@@ -16,7 +16,7 @@ from models import Message, State
 # assets
 ASSETS_DIR = Path("assets")
 OLIER_PNG = str(ASSETS_DIR / "Olier.png")
-OLIER_SMALL_PNG = str(ASSETS_DIR / "olier-small.png")
+OLIER_AVATAR_PNG = str(ASSETS_DIR / "olier-avatar.png")
 LOTUS_PNG = str(ASSETS_DIR / "lotus.png")
 LA_GRACE_LOGO = str(ASSETS_DIR / "la-grace-logo.png")
 with open(ASSETS_DIR / "styles.css", "r") as f:
@@ -119,7 +119,7 @@ def draw_message(message: Message):
     """Draw the given message in the UI"""
     with st.chat_message(
         name=message.role,
-        avatar=OLIER_SMALL_PNG if message.role == "assistant" else LOTUS_PNG,
+        avatar=OLIER_AVATAR_PNG if message.role == "assistant" else LOTUS_PNG,
     ):
         st.write(message.content)
 
