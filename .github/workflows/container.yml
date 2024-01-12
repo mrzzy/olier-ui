@@ -1,0 +1,32 @@
+#
+# Olier UI
+# Github Actions
+# Container Workflow
+# 
+
+name: Publish Docker Container
+on:
+  push: {}
+jobs:
+  publish-olier:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: https://ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.1.0
+        with:
+          context: "."
+          push: true
+          tags: ghcr.io/mrzzy/olier-ui:latest
+

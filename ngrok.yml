@@ -1,0 +1,12 @@
+#
+# Olier
+# Infrastructure
+# Ngrok Tunnel
+#
+
+version: 2
+tunnels:
+  olier-ui:
+    proto: http
+    addr: 8501
+    hostname: olier.ngrok.app
