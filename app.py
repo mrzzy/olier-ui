@@ -33,7 +33,7 @@ MODEL_TEMPERATURE = 0.4
 MODEL_CONTEXT_SIZE = 6
 
 # dataset
-DATA_DIR = Path("data")
+DATA_DIR = Path(os.environ.get("OLIER_UI_DATA_DIR", default="data"))
 # good samples: rated thumbs up by user
 GOOD_DATA_DIR = DATA_DIR / "good"
 # bad samples: rated thumbs down by user
