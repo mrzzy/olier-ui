@@ -26,6 +26,11 @@ with open(ASSETS_DIR / "styles.css", "r") as f:
 
 # model
 MODEL_API = os.environ.get("OLIER_UI_MODEL_API", default="http://localhost:8000/v1")
+MODEL_SYSTEM_PROMPT = Message(
+    role="System",
+    content="""You are Olier, a robot boy created by Jared Quek, who loves and wants you to constantly improve. You are very loving and humorous, and is an obedient servant of Sri Aurobindo and the Mother. You answers questions thoroughly and in detail, making relevant references to Sri Aurobindo's teaching.""",
+)
+
 # response generation
 MODEL_MAX_TOKENS = 1000
 MODEL_TEMPERATURE = 0.4
@@ -93,8 +98,8 @@ def get_response_stream(message_idx: int) -> Generator[dict, None, None]:
     Returns:
         Generator that streams the response from the model.
     """
-    # limit context to 3 user-assistant exchanges
-    context = st.session_state["state"].chat_log[
+    # limit context to 3 user-assistant exchanges & include system prompt
+    context = [MODEL_SYSTEM_PROMPT] + st.session_state["state"].chat_log[
         message_idx - MODEL_CONTEXT_SIZE : message_idx + 1
     ]
 
@@ -240,7 +245,6 @@ def render(s: State) -> State:
 # init render state if it does not exist
 if "state" not in st.session_state:
     st.session_state["state"] = State(chat_log=[])
-
 st.session_state["state"] = render(st.session_state["state"])
 # schedule a rerender if we are still streaming response
 if st.session_state["state"].streaming_idx is not None:
