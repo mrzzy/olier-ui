@@ -25,6 +25,7 @@ services:
 
   ui:
     image: ghcr.io/mrzzy/olier-ui:latest
+    build: .
     environment:
       OLIER_UI_MODEL_API: "http://model:8000/v1"
       OLIER_UI_DATA_DIR: "/dataset"
