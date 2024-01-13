@@ -28,7 +28,6 @@ div.st-emotion-cache-0:nth-child(2) > div:nth-child(1) > div:nth-child(1) img {
 /* Chat Input */
 textarea[data-testid="stChatInput"] {
   padding: 1.2rem;
-  background-color: #ffece1;
 }
 
 textarea[data-testid="stChatInput"]::placeholder {
@@ -43,7 +42,6 @@ div.stChatInputContainer > div > div:nth-child(3) button {
   border-radius: 50%;
   position: relative;
   right: 4pt;
-  /* color: #FFFFFF; */
 }
 
 /* Utility buttons: clipboard & thumbs */
