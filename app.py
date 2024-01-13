@@ -35,7 +35,7 @@ MODEL_SYSTEM_PROMPT = Message(
 )
 # response generation
 MODEL_MAX_TOKENS = 1000
-MODEL_TEMPERATURE = 0.4
+MODEL_TEMPERATURE = 0.5
 # no. of message(s) passed as context
 MODEL_CONTEXT_SIZE = 6
 
