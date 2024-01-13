@@ -135,15 +135,6 @@ def draw_message(message: Message):
         st.write(message.content)
 
 
-def on_submit_chat_input(s: State):
-    # add user's message
-    s.chat_log.append(Message(role="user", content=st.session_state[UI_CHAT_INPUT]))
-    # mark user's last mssage as currently streaming
-    s.streaming_idx = len(s.chat_log) - 1
-    # add empty message to store chatbot's response
-    s.chat_log.append(Message(role="assistant", content=""))
-
-
 def on_click_rating_button(s: State):
     button_idx = st.session_state[UI_RATING_BUTTONS]
     # only allow the user to rate once
@@ -155,6 +146,7 @@ def on_click_rating_button(s: State):
             # user rated thumbs down
             s.rating = False
         write_dataset(s.chat_log[-DATA_SAMPLE_SIZE:], rating=cast(bool, s.rating))
+
 
 def render(s: State) -> State:
     """
@@ -182,23 +174,38 @@ def render(s: State) -> State:
         st.title("Chat with Olier")
 
     # chat messages
-    if s.streaming_idx is not None:
-        # currently streaming response from chatbot
-        # retrieve response delta from chatbot via openai client
-        try:
-            chunk = next(get_response_stream(s.streaming_idx))
-            content = chunk["choices"][0].get("delta", {}).get("content")
-            if content is not None:
-                s.chat_log[-1] = s.chat_log[-1].append(content)
-        except StopIteration:
-            # finished response: stop streaming
-            s.streaming_idx = None
     # draw chat messages
     for message in s.chat_log:
         draw_message(message)
 
-    # only render rating buttons if not currently streaming and non empty chatlog
-    if s.streaming_idx is None and len(s.chat_log) > 0:
+    # chatbot input
+    if st.chat_input(
+        "Ask Olier about...",
+        key=UI_CHAT_INPUT,
+        args=(s,),
+    ):
+        # add user's message
+        s.chat_log.append(Message(role="user", content=st.session_state[UI_CHAT_INPUT]))
+        draw_message(s.chat_log[-1])
+
+        # empty message to store chatbot's response
+        response = Message(role="assistant", content="")
+        s.chat_log.append(response)
+        streaming_idx = len(s.chat_log) - 1
+
+        # stream response from chatbot
+        # placeholder container to fix position when rendering chatbot response
+        response_box = st.empty()
+        for chunk in get_response_stream(streaming_idx):
+            # retrieve response delta from chatbot via openai client
+            content = chunk["choices"][0].get("delta", {}).get("content")
+            if content is not None:
+                s.chat_log[streaming_idx] = s.chat_log[streaming_idx].append(content)
+                with response_box.container():
+                    draw_message(s.chat_log[streaming_idx])
+
+    # only render rating buttons if not in an empty chatlog
+    if len(s.chat_log) > 0:
         # clipboard button, requires that the page is served on https to work
         copy_content = "\n".join(str(m) for m in s.chat_log)
         st_html((CLIPBOARD_HTML % copy_content), width=100, height=50)
@@ -225,14 +232,6 @@ def render(s: State) -> State:
                 "Got it. Olier will show you something different next time.", icon="📝"
             )
 
-    # chatbot input
-    st.chat_input(
-        "Ask Olier about...",
-        key=UI_CHAT_INPUT,
-        on_submit=on_submit_chat_input,
-        args=(s,),
-    )
-
     return s
 
 
@@ -240,6 +239,3 @@ def render(s: State) -> State:
 if "state" not in st.session_state:
     st.session_state["state"] = State(chat_log=[])
 st.session_state["state"] = render(st.session_state["state"])
-# schedule a rerender if we are still streaming response
-if st.session_state["state"].streaming_idx is not None:
-    st.rerun()

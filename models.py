@@ -63,5 +63,4 @@ class State:
     """
 
     chat_log: list[Message]
-    streaming_idx: Optional[int] = None
     rating: Optional[bool] = None
