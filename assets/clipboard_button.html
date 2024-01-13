@@ -5,7 +5,7 @@
 -->
 <body style="margin: 0;">
 <div class="oli-clipboard">
-  <div style="display: none">%s</div>
+  <div id="oli-clipboard-content" style="display: none">%s</div>
   <button id="oli-clipboard-btn" class="oli-clipboard" style="
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
@@ -18,8 +18,8 @@
     border-style: solid;
     border-radius: 4pt;
   "
-                                                       onclick="
-    navigator.clipboard.writeText(document.getElementById('oli-clipboard-btn').value).then(() => {
+   onclick="
+    navigator.clipboard.writeText(document.getElementById('oli-clipboard-content').textContent).then(() => {
         const originalHTML = this.innerHTML;
         this.innerHTML = 'Copied!';
         setTimeout(() => this.innerHTML = originalHTML, 1000);
