@@ -8,7 +8,7 @@ services:
   model:
     image: vllm/vllm-openai:latest
     volumes:
-      - /home/jaredquek/jaredquek/text-generation-webui/models:/models
+      - /home/jaredquek/text-generation-webui/models:/models
       - ~/.cache/huggingface:/root/.cache/huggingface
     expose:
       - 8000
@@ -48,8 +48,6 @@ services:
   # expose ui via ngrok tunnel as ingress
   ingress:
     image: ngrok/ngrok:latest
-    environment:
-      - "NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}"
     command: ["start", "--config", "/ngrok.yml", "olier-ui"]
     ports:
       - 8501:8501
