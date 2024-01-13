@@ -10,6 +10,7 @@ from typing import Generator, Optional, cast
 import openai
 import streamlit as st
 import streamlit_antd_components as sac
+from streamlit.components.v1 import html as st_html
 
 from models import Message, State
 
@@ -23,6 +24,8 @@ LA_GRACE_LOGO = str(ASSETS_DIR / "la-grace-logo.png")
 with open(ASSETS_DIR / "styles.css", "r") as f:
     STYLE_CSS = f.read()
 
+with open(ASSETS_DIR / "clipboard_button.html", "r") as f:
+    CLIPBOARD_HTML = f.read()
 
 # model
 MODEL_API = os.environ.get("OLIER_UI_MODEL_API", default="http://localhost:8000/v1")
@@ -120,7 +123,7 @@ def get_response_stream(message_idx: int) -> Generator[dict, None, None]:
 # UI Frontend
 # ui element keys
 UI_CHAT_INPUT = "chat_input"
-UI_UTILTY_BUTTONS = "utility_buttons"
+UI_RATING_BUTTONS = "rating_buttons"
 
 
 def draw_message(message: Message):
@@ -141,8 +144,8 @@ def on_submit_chat_input(s: State):
     s.chat_log.append(Message(role="assistant", content=""))
 
 
-def on_click_utility_button(s: State):
-    button_idx = st.session_state[UI_UTILTY_BUTTONS]
+def on_click_rating_button(s: State):
+    button_idx = st.session_state[UI_RATING_BUTTONS]
     # only allow the user to rate once
     if s.rating is None:
         if button_idx == 0:
@@ -152,10 +155,6 @@ def on_click_utility_button(s: State):
             # user rated thumbs down
             s.rating = False
         write_dataset(s.chat_log[-DATA_SAMPLE_SIZE:], rating=cast(bool, s.rating))
-    if button_idx == 2:
-        # toggle clipboard
-        s.is_copying = not s.is_copying
-
 
 def render(s: State) -> State:
     """
@@ -198,23 +197,25 @@ def render(s: State) -> State:
     for message in s.chat_log:
         draw_message(message)
 
-    # only render utility buttons if not currently streaming and non empty chatlog
+    # only render rating buttons if not currently streaming and non empty chatlog
     if s.streaming_idx is None and len(s.chat_log) > 0:
+        # clipboard button, requires that the page is served on https to work
+        copy_content = "\n".join(str(m) for m in s.chat_log)
+        st_html((CLIPBOARD_HTML % copy_content), width=100, height=50)
+
+        # chat rating buttons
         sac.buttons(
             [
-                # chat rating button
                 sac.ButtonsItem(icon="hand-thumbs-up"),
                 sac.ButtonsItem(icon="hand-thumbs-down"),
-                # copy chat log to clipboard button
-                sac.ButtonsItem(icon="copy"),
             ],
             index=None,
             return_index=True,
-            key=UI_UTILTY_BUTTONS,
-            on_change=on_click_utility_button,
+            key=UI_RATING_BUTTONS,
+            on_change=on_click_rating_button,
             args=(s,),
         )
-        # user rating
+        # user rating feedback
         if s.rating == True:
             st.toast(
                 "Great. Olier will show you something similar next time.", icon="📝"
@@ -223,13 +224,6 @@ def render(s: State) -> State:
             st.toast(
                 "Got it. Olier will show you something different next time.", icon="📝"
             )
-
-        # copy to clipboard
-        if s.is_copying:
-            # show code block with copy to clipboard function
-            st.code("\n".join(str(m) for m in s.chat_log))
-            # prompt user hover to access copy feature
-            st.toast("Hover over the top right of the text box to copy.", icon="💡")
 
     # chatbot input
     st.chat_input(

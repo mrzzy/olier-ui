@@ -58,12 +58,10 @@ class State:
         chat_log: Chat log of messages between the user & chatbot to render.
         streaming_idx: Optional. Index of the user message the UI is currently streaming
             the Chatbot's reply to or None if not currently streaming.
-        is_copying: Optional. Whether the user is currently copying from the clipboard.
         rating: Optional. Whether the user has rated the conversation. True
             if the user rated thumbs up, False if rated thumbs down or None otherwise.
     """
 
     chat_log: list[Message]
     streaming_idx: Optional[int] = None
-    is_copying: bool = False
     rating: Optional[bool] = None

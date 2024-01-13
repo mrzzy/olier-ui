@@ -45,3 +45,8 @@ div.stChatInputContainer > div > div:nth-child(3) button {
   right: 4pt;
   /* color: #FFFFFF; */
 }
+
+/* Utility buttons: clipboard & thumbs */
+button #oli-clipboard-btn {
+  background-color: none;
+}
