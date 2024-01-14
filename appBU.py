@@ -147,13 +147,14 @@ def on_click_rating_button(s: State):
         write_dataset(s.chat_log[-DATA_SAMPLE_SIZE:], rating=cast(bool, s.rating))
 
 
-def render():
+def render(s: State) -> State:
     """
     Render the Olier Frontend UI.
+    Args:
+        s: Render UI to match given state.
+    Returns:
+        Rendering state with any changes made by the user.
     """
-    # Access the State object from session state
-    s = st.session_state["state"]
-
     # page title & favicon
     st.set_page_config(page_title="Olier", page_icon=OLIER_PNG)
     # inject css to style page
@@ -177,29 +178,30 @@ def render():
         draw_message(message)
 
     # chatbot input
-    if st.chat_input("Ask Olier about...", key=UI_CHAT_INPUT):
+    if st.chat_input(
+        "Ask Olier about...",
+        key=UI_CHAT_INPUT,
+        args=(s,),
+    ):
         # add user's message
-        user_message_content = st.session_state[UI_CHAT_INPUT]
-        user_message = Message(role="user", content=user_message_content)
-        s.chat_log.append(user_message)
-        draw_message(user_message)
+        s.chat_log.append(Message(role="user", content=st.session_state[UI_CHAT_INPUT]))
+        draw_message(s.chat_log[-1])
+
+        # empty message to store chatbot's response
+        response = Message(role="assistant", content="")
+        s.chat_log.append(response)
+        streaming_idx = len(s.chat_log) - 1
 
         # stream response from chatbot
-        response_content = ""
+        # placeholder container to fix position when rendering chatbot response
         response_box = st.empty()
-
-        for chunk in get_response_stream(len(s.chat_log)):
+        for chunk in get_response_stream(streaming_idx):
             # retrieve response delta from chatbot via openai client
             content = chunk["choices"][0].get("delta", {}).get("content")
-            if content:
-                response_content += content
-
-        if response_content:
-            # create and append the assistant's response message
-            assistant_message = Message(role="assistant", content=response_content)
-            s.chat_log.append(assistant_message)
-            with response_box.container():
-                draw_message(assistant_message)
+            if content is not None:
+                s.chat_log[streaming_idx] = s.chat_log[streaming_idx].append(content)
+                with response_box.container():
+                    draw_message(s.chat_log[streaming_idx])
 
     # only render rating buttons if not in an empty chatlog
     if len(s.chat_log) > 0:
@@ -216,24 +218,23 @@ def render():
             index=None,
             return_index=True,
             key=UI_RATING_BUTTONS,
-            on_change=on_click_rating_button
+            on_change=on_click_rating_button,
+            args=(s,),
         )
         # user rating feedback
-        if s.rating is not None:
-            if s.rating:
-                st.toast(
-                    "Great. Olier will show you something similar next time.", icon="📝"
-                )
-            else:
-                st.toast(
-                    "Got it. Olier will show you something different next time.", icon="📝"
-                )
+        if s.rating == True:
+            st.toast(
+                "Great. Olier will show you something similar next time.", icon="📝"
+            )
+        elif s.rating == False:
+            st.toast(
+                "Got it. Olier will show you something different next time.", icon="📝"
+            )
 
-    # Save the modified State object back to the session state
-    st.session_state["state"] = s
+    return s
 
-# Initial setup for the State object in session state
+
+# init render state if it does not exist
 if "state" not in st.session_state:
-    st.session_state["state"] = State(chat_log=[], rating=None)
-
-render()
+    st.session_state["state"] = State(chat_log=[])
+st.session_state["state"] = render(st.session_state["state"])
